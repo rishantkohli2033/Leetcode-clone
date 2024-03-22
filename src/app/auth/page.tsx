@@ -1,4 +1,5 @@
 import Navbar from '@/components/Navbar/Navbar';
+import AuthModal from '@/components/modals/AuthModal';
 import Image from 'next/image';
 import React from 'react';
 
@@ -16,6 +17,7 @@ const AuthPage:React.FC<AuthPageProps> = () => {
 					<Image src='/hero.png' alt='Hero img' width={700} height={700} />
 				</div>
 				{/* {authModal.isOpen && <AuthModal />} */}
+				{/* <AuthModal /> */}
 			</div>
 		</div>
   )
