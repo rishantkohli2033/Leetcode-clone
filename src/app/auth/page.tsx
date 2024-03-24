@@ -17,8 +17,9 @@ type AuthPageProps = {
 const AuthPage:React.FC<AuthPageProps> = () => {
 	const authModal = useRecoilValue(authModalState);
 	const [user, loading, error] = useAuthState(auth);
-	const [pageLoading, setPageLoading] = useState(true);
+	const [pageLoading, setPageLoading] = useState(true); //to handle the error where auth page was showing for a split second
 	const router = useRouter();
+	
 	useEffect(()=>{
 		if(user) router.push("/");
 		if(!loading && !user) setPageLoading(false);
