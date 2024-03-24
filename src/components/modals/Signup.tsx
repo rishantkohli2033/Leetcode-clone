@@ -1,6 +1,9 @@
 import { authModalState } from '@/atoms/authModalAtom';
-import React from 'react';
+import { auth } from '@/firebase/firebase';
+import React, { useState } from 'react';
 import { useSetRecoilState } from 'recoil';
+import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
+import { useRouter } from 'next/navigation';
 
 type SignupProps = {
     
@@ -11,10 +14,27 @@ const Signup:React.FC<SignupProps> = () => {
 	const handleClick = () =>{
 		setAuthModalState((prev)=>({...prev, type: "login"}))
 	}
-    let loading = false;
+	const [inputs, setInputs] = useState({email: "", displayName: "", password: ""});
+	const router = useRouter();
+	const [createUserWithEmailAndPassword,user,loading,error] = useCreateUserWithEmailAndPassword(auth);
+
+	const handleChangeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setInputs((prev)=>({...prev, [e.target.name]: e.target.value}))
+	}
+	const handleRegister = async (e: React.FormEvent<HTMLFormElement>)=>{
+		e.preventDefault();
+		try {
+			const newUser = await createUserWithEmailAndPassword(inputs.email, inputs.password);
+			if(!newUser) return;
+			console.log(newUser);
+			router.push("/home");
+		} catch (error:any) {
+			alert(error.message);
+		}
+	}
     return (
         <form className='space-y-6 px-6 pb-4' 
-        //onSubmit={handleRegister}
+        onSubmit={handleRegister}
         >
 			<h3 className='text-xl font-medium text-white'>Register to LeetClone</h3>
 			<div>
@@ -22,14 +42,12 @@ const Signup:React.FC<SignupProps> = () => {
 					Email
 				</label>
 				<input
-					//onChange={handleChangeInput}
+					onChange={handleChangeInput}
 					type='email'
 					name='email'
 					id='email'
-					className='
-        border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
-        bg-gray-600 border-gray-500 placeholder-gray-400 text-white
-    '
+					className='border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+       				 bg-gray-600 border-gray-500 placeholder-gray-400 text-white'
 					placeholder='name@company.com'
 				/>
 			</div>
@@ -38,14 +56,12 @@ const Signup:React.FC<SignupProps> = () => {
 					Display Name
 				</label>
 				<input
-					//onChange={handleChangeInput}
+					onChange={handleChangeInput}
 					type='displayName'
 					name='displayName'
 					id='displayName'
-					className='
-        border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
-        bg-gray-600 border-gray-500 placeholder-gray-400 text-white
-    '
+					className='border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+					bg-gray-600 border-gray-500 placeholder-gray-400 text-white'
 					placeholder='John Doe'
 				/>
 			</div>
@@ -54,14 +70,12 @@ const Signup:React.FC<SignupProps> = () => {
 					Password
 				</label>
 				<input
-					//onChange={handleChangeInput}
+					onChange={handleChangeInput}
 					type='password'
 					name='password'
 					id='password'
-					className='
-        border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
-        bg-gray-600 border-gray-500 placeholder-gray-400 text-white
-    '
+					className='border-2 outline-none sm:text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
+					bg-gray-600 border-gray-500 placeholder-gray-400 text-white'
 					placeholder='*******'
 				/>
 			</div>
@@ -69,8 +83,7 @@ const Signup:React.FC<SignupProps> = () => {
 			<button
 				type='submit'
 				className='w-full text-white focus:ring-blue-300 font-medium rounded-lg
-            text-sm px-5 py-2.5 text-center bg-brand-orange hover:bg-brand-orange-s
-        '
+            	text-sm px-5 py-2.5 text-center bg-brand-orange hover:bg-brand-orange-s'
 			>
 				{loading ? "Registering..." : "Register"}
 			</button>
