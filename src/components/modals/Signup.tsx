@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useSetRecoilState } from 'recoil';
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 type SignupProps = {
     
@@ -23,19 +24,18 @@ const Signup:React.FC<SignupProps> = () => {
 	}
 	const handleRegister = async (e: React.FormEvent<HTMLFormElement>)=>{
 		e.preventDefault();
-		if (!inputs.email || !inputs.password || !inputs.displayName) return alert("Please fill all fields");
+		if (!inputs.email || !inputs.password || !inputs.displayName) return toast.error("Please fill all the fields", {position:"top-center",autoClose:3000, theme: "dark"});
 		try {
 			const newUser = await createUserWithEmailAndPassword(inputs.email, inputs.password);
 			if(!newUser) return;
-			console.log(newUser);
 			router.push("/");
 		} catch (error:any) {
-			alert(error.message);
+			toast.error("Invalid Credentials", {position:"top-center",autoClose:3000, theme: "dark"});
 		}
 	}
 
 	useEffect(()=>{
-		if(error) alert(error.message);
+		if(error) toast.error("Invalid Credentials", {position:"top-center",autoClose:3000, theme: "dark"});
 	},[error]);
     return (
         <form className='space-y-6 px-6 pb-4' 
