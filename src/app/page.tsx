@@ -7,7 +7,6 @@ type HomePageProps = {
 };
 
 const HomePage:React.FC<HomePageProps> = () => {
-    
     return(
         <>
             <main className='bg-dark-layer-2 min-h-screen'>
