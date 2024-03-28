@@ -1,12 +1,37 @@
+"use client"
 import ProblemsTable from '@/components/ProblemsTable/ProblemsTable';
 import Topbar from '@/components/Topbar/Topbar';
-import React from 'react';
+import { firestore } from '@/firebase/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import React, { FC, useState } from 'react';
 
 type HomePageProps = {
     
 };
 
 const HomePage:React.FC<HomePageProps> = () => {
+    const [inputs, setInputs] = useState({
+        pid: "",
+        title: "",
+        diff: "",
+        cat: "",
+        order: "", 
+        vid: "",
+        link: "",
+    });
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
+        setInputs((prev)=>({...prev, [e.target.name]: e.target.value}));
+    }
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) =>{
+        e.preventDefault();
+        //convert inputs.order to integer
+        const newProblem = {
+            ...inputs,
+            order: Number(inputs.order),
+        }
+        await setDoc(doc(firestore, "problems", inputs.pid), newProblem);
+        alert("save to db");
+    }
     return(
         <>
             <main className='bg-dark-layer-2 min-h-screen'>
@@ -40,6 +65,16 @@ const HomePage:React.FC<HomePageProps> = () => {
                         <ProblemsTable/>
                     </table>
                 </div>
+                <form onSubmit={handleSubmit} className='flex flex-col p-6 max-w-sm gap-3'>
+                    <input onChange={handleChange} type="text" placeholder='pid' name='pid' value={inputs.pid} />
+                    <input onChange={handleChange} type="text" placeholder='title' name='title' value={inputs.title} />
+                    <input onChange={handleChange} type="text" placeholder='diff' name='diff' value={inputs.diff} />
+                    <input onChange={handleChange} type="text" placeholder='cat' name='cat' value={inputs.cat} />
+                    <input onChange={handleChange} type="text" placeholder='order' name='order' value={inputs.order} />
+                    <input onChange={handleChange} type="text" placeholder='vid?' name='vid' value={inputs.vid} />
+                    <input onChange={handleChange} type="text" placeholder='link?' name='link' value={inputs.link} />
+                    <button className='bg-white'>Save to db</button>
+                </form>
             </main>
         </>
     )
