@@ -1,21 +1,25 @@
 "use client"
-import { problems } from '@/mockProblems/problems';
+import { auth, firestore } from '@/firebase/firebase';
+import { DBProblem } from '@/utils/types/problem';
+import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
+import { useAuthState } from 'react-firebase-hooks/auth';
 import { AiFillYoutube } from 'react-icons/ai';
 import { BsCheckCircle } from 'react-icons/bs';
 import { IoClose } from 'react-icons/io5';
 import YouTube from 'react-youtube';
 
 type ProblemsTableProps = {
-    
+    setLoadingProblems: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const ProblemsTable:React.FC<ProblemsTableProps> = () => {
+const ProblemsTable:React.FC<ProblemsTableProps> = ({setLoadingProblems}) => {
     const [youtubePlayer, setYoutubePlayer] = useState({
 		isOpen: false,
 		videoId: "",
 	});
+    const problems = useGetProblems(setLoadingProblems);
     const closeModal = () => setYoutubePlayer(()=>({isOpen: false, videoId: ""}));
 
     useEffect(() => { //to close window using esc key
@@ -37,9 +41,15 @@ const ProblemsTable:React.FC<ProblemsTableProps> = () => {
                                 <BsCheckCircle fontSize={"18"} width={"18"} />
                             </th>
                             <td className='px-6 py-4'>
-                                <Link href={`/problems/${problem.id}`} className="hover:text-blue-600 cursor-pointer">
-                                    {problem.title}
-                                </Link>
+                                {problem.link ? (
+                                    <Link href={problem.link} className="hover:text-blue-600 cursor-pointer" target='_blank'>
+                                        {problem.title}
+                                    </Link>
+                                ) : (
+                                    <Link href={`/problems/${problem.id}`} className="hover:text-blue-600 cursor-pointer">
+                                        {problem.title}
+                                    </Link>
+                                )}
                             </td>
                             <td className={`px-6 py-4 ${difficultyColor}`}>
                                 {problem.difficulty}
@@ -88,3 +98,46 @@ const ProblemsTable:React.FC<ProblemsTableProps> = () => {
     )
 }
 export default ProblemsTable;
+
+function useGetProblems(setLoadingProblems: React.Dispatch<React.SetStateAction<boolean>>) {
+	const [problems, setProblems] = useState<DBProblem[]>([]);
+
+	useEffect(() => {
+		const getProblems = async () => {
+			// fetching data logic
+			setLoadingProblems(true);
+			const q = query(collection(firestore, "problems"), orderBy("order", "asc")); //fetch data from problems collection in ascending order(sorted by order field)
+			const querySnapshot = await getDocs(q); //will get documents according to query
+			const tmp: DBProblem[] = []; //temp array to store data;
+			querySnapshot.forEach((doc) => { //firestore will return alot of data that is not needed and it can be filtered like this
+				tmp.push({ id: doc.id, ...doc.data() } as DBProblem);
+			});
+			setProblems(tmp);//push array to state
+			setLoadingProblems(false);
+		};
+
+		getProblems();
+	}, [setLoadingProblems]);
+	return problems;
+}
+
+function useGetSolvedProblems() {
+	const [solvedProblems, setSolvedProblems] = useState<string[]>([]);
+	const [user] = useAuthState(auth);
+
+	useEffect(() => {
+		const getSolvedProblems = async () => {
+			const userRef = doc(firestore, "users", user!.uid);
+			const userDoc = await getDoc(userRef);
+
+			if (userDoc.exists()) {
+				setSolvedProblems(userDoc.data().solvedProblems);
+			}
+		};
+
+		if (user) getSolvedProblems();
+		if (!user) setSolvedProblems([]);
+	}, [user]);
+
+	return solvedProblems;
+}
