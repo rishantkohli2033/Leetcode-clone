@@ -3,11 +3,12 @@ import CircleSkeleton from "@/components/Skeletons/CircleSkeleton";
 import RectangleSkeleton from "@/components/Skeletons/RectangleSkeleton";
 import { auth, firestore } from "@/firebase/firebase";
 import { DBProblem, Problem } from "@/utils/types/problem";
-import { doc, getDoc, runTransaction } from "firebase/firestore";
+import { arrayRemove, arrayUnion, doc, getDoc, runTransaction, updateDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { AiFillLike, AiFillDislike, AiOutlineLoading3Quarters } from "react-icons/ai";
+import { AiFillLike, AiFillDislike, AiOutlineLoading3Quarters, AiFillStar } from "react-icons/ai";
 import { BsCheck2Circle } from "react-icons/bs";
+import { TbJewishStarFilled, TbStarFilled } from "react-icons/tb";
 import { TiStarOutline } from "react-icons/ti";
 import { toast } from "react-toastify";
 
@@ -105,7 +106,7 @@ const ProblemDescription: React.FC<ProblemDescriptionProps> = ({problem}) => {
 
 	const handleDislike = async () => {
 		if (!user) {
-			toast.error("You must be logged in to like a problem", { position: "top-left", theme: "dark" });
+			toast.error("You must be logged in to dislike a problem", { position: "top-left", theme: "dark" });
 			return;
 		}
 
@@ -170,12 +171,37 @@ const ProblemDescription: React.FC<ProblemDescriptionProps> = ({problem}) => {
 					//work done below will reflect in frontend
 					setCurrentProblem((prev) => (prev ? { ...prev, dislikes: prev.dislikes + 1 } : null));
 					setData((prev) => ({ ...prev, disliked: true }));
-					
+
 				}
 			}
 		});
 		setUpdating(false);
 	}
+
+	const handleStar = async () => {
+		if (!user) {
+			toast.error("You must be logged in to star a problem", { position: "top-left", theme: "dark" });
+			return;
+		}
+		if (updating) return;
+		setUpdating(true);
+		//as we are not updating multiple documents that are depenendent on each other's info, here we can use basic methods to update our fields instead of using transaction
+		if (!starred) {
+			const userRef = doc(firestore, "users", user.uid);
+			await updateDoc(userRef, {
+				starredProblems: arrayUnion(problem.id),
+			});
+			setData((prev) => ({ ...prev, starred: true }));
+		} else {
+			const userRef = doc(firestore, "users", user.uid);
+			await updateDoc(userRef, {
+				starredProblems: arrayRemove(problem.id),
+			});
+			setData((prev) => ({ ...prev, starred: false }));
+		}
+
+		setUpdating(false);
+	};
 	return (
 		<div className='bg-dark-layer-1'>
 			{/* TAB */}
@@ -205,17 +231,26 @@ const ProblemDescription: React.FC<ProblemDescriptionProps> = ({problem}) => {
 								<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-dark-gray-6'
 								   onClick={handleLike}
 								>
-									{liked ? !updating ? (<AiFillLike className="text-dark-blue-s"/>) : (<AiOutlineLoading3Quarters className="animate-spin"/>) : (<AiFillLike/>)}
+									{liked && !updating && <AiFillLike className='text-dark-blue-s' />}
+									{!liked && !updating && <AiFillLike />}
+									{updating && <AiOutlineLoading3Quarters className='animate-spin' />}
 									<span className='text-xs'>{currentProblem.likes}</span>
 								</div>
 								<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-green-s text-dark-gray-6'
 									onClick={handleDislike}
 								>
-									{disliked ? !updating ? (<AiFillDislike className="text-red-600"/>) : (<AiOutlineLoading3Quarters className="animate-spin"/>) : (<AiFillDislike/>)}
+									{disliked && !updating && <AiFillDislike className='text-red-600' />}
+									{!disliked && !updating && <AiFillDislike />}
+									{updating && <AiOutlineLoading3Quarters className='animate-spin' />}
 									<span className='text-xs'>{currentProblem.dislikes}</span>
 								</div>
-								<div className='cursor-pointer hover:bg-dark-fill-3  rounded p-[3px]  ml-4 text-xl transition-colors duration-200 text-green-s text-dark-gray-6 '>
-									<TiStarOutline />
+								<div className='cursor-pointer hover:bg-dark-fill-3  rounded p-[3px]  ml-4 text-xl transition-colors duration-200 text-green-s text-dark-gray-6 '
+									onClick={handleStar}
+								>
+									{starred && !updating && <AiFillStar className='text-dark-yellow' />}
+									{!starred && !updating && <TiStarOutline />}
+									{updating && <AiOutlineLoading3Quarters className='animate-spin' />}
+									
 								</div>
 							</div>
 						)}
