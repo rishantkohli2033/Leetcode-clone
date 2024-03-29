@@ -3,10 +3,10 @@ import CircleSkeleton from "@/components/Skeletons/CircleSkeleton";
 import RectangleSkeleton from "@/components/Skeletons/RectangleSkeleton";
 import { auth, firestore } from "@/firebase/firebase";
 import { DBProblem, Problem } from "@/utils/types/problem";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, runTransaction } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { AiFillLike, AiFillDislike } from "react-icons/ai";
+import { AiFillLike, AiFillDislike, AiOutlineLoading3Quarters } from "react-icons/ai";
 import { BsCheck2Circle } from "react-icons/bs";
 import { TiStarOutline } from "react-icons/ti";
 import { toast } from "react-toastify";
@@ -16,18 +16,165 @@ type ProblemDescriptionProps = {
 };
 
 const ProblemDescription: React.FC<ProblemDescriptionProps> = ({problem}) => {
-	// const userRef = doc(firestore, "problems", user!.uid);
-	// const userDoc = await getDoc(userRef);
 	const [user] = useAuthState(auth);
-	const {currentProblem, loading, problemDifficultyColor} = useGetCurrentProblem(problem.id);
+	const {currentProblem, loading, problemDifficultyColor, setCurrentProblem} = useGetCurrentProblem(problem.id);
 	const {liked,disliked,solved,setData,starred} = useGetUsersDataOnProblem(problem.id);
-	
+	const [updating, setUpdating] = useState(false); //loading state for like, dislike
 
-	const handleLike = ()=>{
+	const returnUserAndProblemData = async (transaction:any) => {
+		const userRef = doc(firestore, "users", user!.uid);
+		const problemRef = doc(firestore, "problems", problem.id);
+		const userDoc = await transaction.get(userRef);
+		const problemDoc = await transaction.get(problemRef);
+		return {userDoc, problemDoc, userRef, problemRef};
+	}
+
+	const handleLike = async ()=>{
 		if (!user) {
 			toast.error("You must be logged in to like a problem", { position: "top-left", theme: "dark" });
 			return;
 		}
+
+		if (updating) return; //We can't like or dislike while updating/loading
+
+		setUpdating(true);
+		await runTransaction(firestore, async(transaction)=>{ //transaction will fail if even one function fails so everything should work for smoother transaction
+			const {problemDoc, userDoc, userRef, problemRef} = await returnUserAndProblemData(transaction);
+
+			if(userDoc.exists() && problemDoc.exists()){
+				if(liked){
+
+					//if user already liked a problem then liking again will result in decrement of like value and removal of problem id from likedProblems on user document
+
+					transaction.update(userRef, {
+						likedProblems: userDoc.data().likedProblems.filter((id: string) => id !== problem.id),
+					}); //removing current problem from problems array
+					
+					transaction.update(problemRef, {
+						likes: problemDoc.data().likes - 1,
+					});// decreasing like value
+
+					//above will reflect in database
+					//work done below will reflect in frontend
+					setCurrentProblem((prev) => (prev ? { ...prev, likes: prev.likes - 1 } : null));
+					setData((prev) => ({ ...prev, liked: false }));
+
+				}else if(disliked){
+
+					//if user liked a problem which was disliked by him then liking will result in decrement of disliked value and removal of problem id from dislikedProblems
+
+					//while increasing like value and adding the problem in liked array on user document
+					transaction.update(userRef, {
+						dislikedProblems: userDoc.data().dislikedProblems.filter((id: string) => id !== problem.id),
+						likedProblems: [...userDoc.data().likedProblems, problem.id],
+					}); //removing current problem from dislike array and adding it to like array
+
+					transaction.update(problemRef, {
+						dislikes: problemDoc.data().dislikes - 1,
+						likes: problemDoc.data().likes + 1,
+					});// decreasing dislike value and increasing like value
+			
+					//above will reflect in database
+					//work done below will reflect in frontend
+					setCurrentProblem((prev) => (prev ? { ...prev, dislikes: prev.dislikes - 1, likes: prev.likes + 1 } : null));
+					setData((prev) => ({ ...prev, liked: true, disliked: false }));
+
+				} else {
+
+					//if user didn't already liked aor disliked the problem then we will just add problem in liked array fro user document and update likes in problem document
+
+					transaction.update(userRef, {
+						likedProblems: [...userDoc.data().likedProblems, problem.id],
+					}); //adding current problem in likes array
+
+					transaction.update(problemRef, {
+						likes: problemDoc.data().likes + 1,
+					});// increasing like value
+
+
+					//above will reflect in database
+					//work done below will reflect in frontend
+					setCurrentProblem((prev) => (prev ? { ...prev, likes: prev.likes + 1 } : null));
+					setData((prev) => ({ ...prev, liked: true }));
+
+				}
+			}
+		});
+		setUpdating(false);
+	}
+
+	const handleDislike = async () => {
+		if (!user) {
+			toast.error("You must be logged in to like a problem", { position: "top-left", theme: "dark" });
+			return;
+		}
+
+		if (updating) return; //We can't like or dislike while updating/loading
+
+		setUpdating(true);
+		await runTransaction(firestore, async(transaction)=>{
+			const {problemDoc, userDoc, userRef, problemRef} = await returnUserAndProblemData(transaction);
+
+			if(userDoc.exists() && problemDoc.exists()){
+
+				if(disliked){
+
+					//if user already liked a problem then liking again will result in decrement of like value and removal of problem id from likedProblems on user document
+
+					transaction.update(userRef, {
+						dislikedProblems: userDoc.data().dislikedProblems.filter((id: string) => id !== problem.id),
+					}); //removing current problem from problems array
+
+					transaction.update(problemRef, {
+						dislikes: problemDoc.data().dislikes - 1,
+					});// decreasing like value
+
+					//above will reflect in database
+					//work done below will reflect in frontend
+					setCurrentProblem((prev) => (prev ? { ...prev, dislikes: prev.dislikes - 1 } : null));
+					setData((prev) => ({ ...prev, disliked: false }));
+
+				}else if(liked){
+
+					//if user liked a problem which was disliked by him then liking will result in decrement of disliked value and removal of problem id from dislikedProblems
+					//while increasing like value and adding the problem in liked array on user document
+
+					transaction.update(userRef, {
+						likedProblems: userDoc.data().likedProblems.filter((id: string) => id !== problem.id),
+						dislikedProblems: [...userDoc.data().dislikedProblems, problem.id],
+					}); //removing current problem from dislike array and adding it to like array
+
+					transaction.update(problemRef, {
+						dislikes: problemDoc.data().dislikes + 1,
+						likes: problemDoc.data().likes - 1,
+					});// decreasing dislike value and increasing like value
+			
+					//above will reflect in database
+					//work done below will reflect in frontend
+					setCurrentProblem((prev) => (prev ? { ...prev, dislikes: prev.dislikes + 1, likes: prev.likes - 1 } : null));
+					setData((prev) => ({ ...prev, liked: false, disliked: true }));
+
+				} else {
+
+					//if user didn't already liked aor disliked the problem then we will just add problem in liked array fro user document and update likes in problem document
+
+					transaction.update(userRef, {
+						dislikedProblems: [...userDoc.data().dislikedProblems, problem.id],
+					}); //adding current problem in likes array
+
+					transaction.update(problemRef, {
+						dislikes: problemDoc.data().dislikes + 1,
+					});// increasing like value
+
+					//above will reflect in database
+					//work done below will reflect in frontend
+					setCurrentProblem((prev) => (prev ? { ...prev, dislikes: prev.dislikes + 1 } : null));
+					setData((prev) => ({ ...prev, disliked: true }));
+					
+				}
+			}
+		});
+		setUpdating(false);
 	}
 	return (
 		<div className='bg-dark-layer-1'>
@@ -58,11 +205,13 @@ const ProblemDescription: React.FC<ProblemDescriptionProps> = ({problem}) => {
 								<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-dark-gray-6'
 								   onClick={handleLike}
 								>
-									{liked ? (<AiFillLike className="text-dark-blue-s"/>) : (<AiFillLike/>)}
+									{liked ? !updating ? (<AiFillLike className="text-dark-blue-s"/>) : (<AiOutlineLoading3Quarters className="animate-spin"/>) : (<AiFillLike/>)}
 									<span className='text-xs'>{currentProblem.likes}</span>
 								</div>
-								<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-green-s text-dark-gray-6'>
-									<AiFillDislike />
+								<div className='flex items-center cursor-pointer hover:bg-dark-fill-3 space-x-1 rounded p-[3px]  ml-4 text-lg transition-colors duration-200 text-green-s text-dark-gray-6'
+									onClick={handleDislike}
+								>
+									{disliked ? !updating ? (<AiFillDislike className="text-red-600"/>) : (<AiOutlineLoading3Quarters className="animate-spin"/>) : (<AiFillDislike/>)}
 									<span className='text-xs'>{currentProblem.dislikes}</span>
 								</div>
 								<div className='cursor-pointer hover:bg-dark-fill-3  rounded p-[3px]  ml-4 text-xl transition-colors duration-200 text-green-s text-dark-gray-6 '>
@@ -149,6 +298,7 @@ function useGetCurrentProblem(problemId: string){
 						? "bg-dark-yellow text-dark-yellow"
 						: " bg-dark-pink text-dark-pink"
 				);
+				console.log(currentProblem)
 			} else {
 				console.log("No such document!");
 			}
@@ -157,7 +307,7 @@ function useGetCurrentProblem(problemId: string){
 		getProblem();
 	},[problemId]);
 	
-	return {currentProblem, loading, problemDifficultyColor};
+	return {currentProblem, loading, problemDifficultyColor, setCurrentProblem};
 }
 
 function useGetUsersDataOnProblem(problemId: string) {
