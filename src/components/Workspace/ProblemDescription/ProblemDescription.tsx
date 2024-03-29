@@ -333,7 +333,6 @@ function useGetCurrentProblem(problemId: string){
 						? "bg-dark-yellow text-dark-yellow"
 						: " bg-dark-pink text-dark-pink"
 				);
-				console.log(currentProblem)
 			} else {
 				console.log("No such document!");
 			}
