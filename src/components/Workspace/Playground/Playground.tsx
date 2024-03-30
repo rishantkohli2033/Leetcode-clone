@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PreferenceNav from './PreferenceNav/PreferenceNav';
 import Split from 'react-split';
 import ReactCodeMirror from '@uiw/react-codemirror';
@@ -21,8 +21,7 @@ type PlaygroundProps = {
 
 const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) => {
 	const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0);
-	const boilerPlate = problem.starterCode;
-	const [userCode, setUserCode] = useState<string>(boilerPlate);
+	const [userCode, setUserCode] = useState<string>(problem.starterCode);
     const [user] = useAuthState(auth);
 	const {pid} = useParams();
 	const handleSubmit = async () => {
@@ -77,7 +76,17 @@ const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) 
 	}
 	const onChange = (value:string) => {
 		setUserCode(value);
+		localStorage.setItem(`code-${pid}`, JSON.stringify(value));
 	}
+
+	useEffect(() => {
+		const code = localStorage.getItem(`code-${pid}`);
+		if (user) {
+			setUserCode(code ? JSON.parse(code) : problem.starterCode);
+		} else {
+			setUserCode(problem.starterCode);
+		}
+	}, [pid, user, problem.starterCode]);
     return (
         <div className='flex flex-col bg-dark-layer-1 relative overflow-x-hidden'>
 			<PreferenceNav 
@@ -87,7 +96,7 @@ const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) 
 			<Split className='h-[calc(100vh-94px)]' direction='vertical' sizes={[60, 40]} minSize={60}>
 				<div className='w-full overflow-auto'>
 					<ReactCodeMirror
-						 value={boilerPlate}
+						 value={userCode}
 						 theme={vscodeDark}
 						 onChange={onChange}
 						 extensions={[javascript()]}
