@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 import { problems } from '@/utils/problems';
 import { useParams } from 'next/navigation';
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import useLocalStorage from '@/components/hooks/useLocalStorage';
 
 type PlaygroundProps = {
     problem: Problem;
@@ -19,11 +20,26 @@ type PlaygroundProps = {
 	setSolved: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+export interface ISettings {
+	fontSize: string;
+	settingsModalIsOpen: boolean;
+	dropdownIsOpen: boolean;
+}
+
 const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) => {
 	const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0);
 	let [userCode, setUserCode] = useState<string>(problem.starterCode);
+	const [fontSize, setFontSize] = useLocalStorage("lcc-fontSize", "16px");
+	const [settings, setSettings] = useState<ISettings>({
+		fontSize: fontSize,
+		settingsModalIsOpen: false,
+		dropdownIsOpen: false,
+	});
     const [user] = useAuthState(auth);
 	const {pid} = useParams();
+	console.log(settings.fontSize);
+	
+
 	const handleSubmit = async () => {
 		if (!user) {
 			toast.error("Please login to submit your code", {
@@ -88,20 +104,21 @@ const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) 
 			setUserCode(problem.starterCode);
 		}
 	}, [pid, user, problem.starterCode]);
+
     return (
         <div className='flex flex-col bg-dark-layer-1 relative overflow-x-hidden'>
 			<PreferenceNav 
-            // settings={settings} setSettings={setSettings}
+             settings={settings} setSettings={setSettings}
              />
 
 			<Split className='h-[calc(100vh-94px)]' direction='vertical' sizes={[60, 40]} minSize={60}>
 				<div className='w-full overflow-auto'>
 					<ReactCodeMirror
-						 value={userCode}
-						 theme={vscodeDark}
-						 onChange={onChange}
-						 extensions={[javascript()]}
-						 style={{ fontSize: 16 }}
+						value={userCode}
+						theme={vscodeDark}
+						onChange={onChange}
+						extensions={[javascript()]}
+						style={{ fontSize: settings.fontSize }}
 					/>
 				</div>
 				<div className='w-full px-5 overflow-auto'>
