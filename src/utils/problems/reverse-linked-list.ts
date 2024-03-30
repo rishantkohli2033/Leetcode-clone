@@ -104,6 +104,6 @@ export const reverseLinkedList: Problem = {
 <li class='mt-2'><code>-5000 <= Node.val <= 5000</code></li>`,
 	starterCode: starterCodeReverseLinkedListJS,
 	handlerFunction: reverseLinkedListHandler,
-	starterFunctionName: "function reverseLinkedList(",
+	starterFunctionName: "function reverseLinkedList(", //in our boilerPlate we are going to have some comments also, to not render the comments we are going to use starterFuncName
 	order: 2,
 };

@@ -21,7 +21,7 @@ type PlaygroundProps = {
 
 const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) => {
 	const [activeTestCaseId, setActiveTestCaseId] = useState<number>(0);
-	const [userCode, setUserCode] = useState<string>(problem.starterCode);
+	let [userCode, setUserCode] = useState<string>(problem.starterCode);
     const [user] = useAuthState(auth);
 	const {pid} = useParams();
 	const handleSubmit = async () => {
@@ -34,6 +34,7 @@ const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) 
 			return;
 		}
 		try {
+			userCode = userCode.slice(userCode.indexOf(problem.starterFunctionName)); //to remove comments before main function
 			const cb = new Function(`return ${userCode}`)(); //user's code is currently stored as a string, this piece of line will help in converting the string to a function
 			const handler = problems[pid as string].handlerFunction;
 			if (typeof handler === "function") {
