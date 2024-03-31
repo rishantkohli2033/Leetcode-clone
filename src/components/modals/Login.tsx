@@ -29,7 +29,6 @@ const Login:React.FC<LoginProps> = () => {
 		try {
 			const user = await signInWithEmailAndPassword(inputs.email, inputs.password);
 			if(!user) return;
-			console.log(user);
 			router.push("/");
 		} catch (error:any) {
 			toast.error("Invalid Credentials", {position:"top-center",autoClose:3000, theme: "dark"});

@@ -21,7 +21,6 @@ const ProblemsTable:React.FC<ProblemsTableProps> = ({setLoadingProblems}) => {
 	});
     const problems = useGetProblems(setLoadingProblems);
 	const solvedProblems = useGetSolvedProblems();
-	console.log(solvedProblems)
     const closeModal = () => setYoutubePlayer(()=>({isOpen: false, videoId: ""}));
 
     useEffect(() => { //to close window using esc key

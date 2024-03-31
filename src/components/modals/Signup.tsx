@@ -29,7 +29,6 @@ const Signup:React.FC<SignupProps> = () => {
 		try {
 			toast.loading("Creating your account", { position: "top-center", toastId: "loadingToast" });
 			const newUser = await createUserWithEmailAndPassword(inputs.email, inputs.password);
-			console.log(newUser);
 			if(!newUser) return;
 			const userData = {
 				uid: newUser.user.uid,
