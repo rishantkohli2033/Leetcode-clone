@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import PreferenceNav from './PreferenceNav/PreferenceNav';
 import Split from 'react-split';
@@ -13,6 +14,7 @@ import { problems } from '@/utils/problems';
 import { useParams } from 'next/navigation';
 import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
 import useLocalStorage from '@/components/hooks/useLocalStorage';
+import useHasMounted from '@/components/hooks/useHasMounted';
 
 type PlaygroundProps = {
     problem: Problem;
@@ -37,7 +39,6 @@ const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) 
 	});
     const [user] = useAuthState(auth);
 	const {pid} = useParams();
-	console.log(settings.fontSize);
 	
 
 	const handleSubmit = async () => {
@@ -105,6 +106,8 @@ const Playground:React.FC<PlaygroundProps> = ({problem, setSuccess, setSolved}) 
 		}
 	}, [pid, user, problem.starterCode]);
 
+	const hasMounted = useHasMounted(); //to fix hydration error which caused font-size to reset after refresh
+	if(!hasMounted) return null;
     return (
         <div className='flex flex-col bg-dark-layer-1 relative overflow-x-hidden'>
 			<PreferenceNav 
