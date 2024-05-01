@@ -2,8 +2,6 @@
 import ProblemsTable from '@/components/ProblemsTable/ProblemsTable';
 import Topbar from '@/components/Topbar/Topbar';
 import useHasMounted from '@/components/hooks/useHasMounted';
-import { firestore } from '@/firebase/firebase';
-import { doc, setDoc } from 'firebase/firestore';
 
 import React, { FC, useState } from 'react';
 

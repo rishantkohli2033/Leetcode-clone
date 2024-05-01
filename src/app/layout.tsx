@@ -4,6 +4,7 @@ import "./globals.css";
 import RecoilContextProvider from "@/recoilContextProvider";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { Analytics } from "@vercel/analytics/react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
         <body className={inter.className}>
         <ToastContainer/>
           {children}
+          <Analytics/>
         </body>
       </RecoilContextProvider>
     </html>
