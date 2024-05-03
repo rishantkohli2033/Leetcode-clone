@@ -13,7 +13,8 @@ import Timer from '../Timer/Timer';
 import { problems } from '@/utils/problems';
 import { useParams, useRouter } from 'next/navigation';
 import { Problem } from '@/utils/types/problem';
-
+import { PiSignInFill } from "react-icons/pi";
+import { MdOutlineWorkspacePremium } from 'react-icons/md';
 
 
 type TopbarProps = {
@@ -51,12 +52,13 @@ const Topbar:React.FC<TopbarProps> = ({problemPage}) => {
     return (
         <nav className='relative flex h-[50px] w-full shrink-0 items-center px-5 bg-dark-layer-1 text-dark-gray-7'>
             <div className={`flex w-full items-center justify-between ${!problemPage ? "max-w-[1200px] mx-auto" : ""}`}>
-                <Link href='/' className='h-[22px] flex-1'>
-                    <Image src='/logo-full.png' alt='Logo' height={100} width={100} style={{ width: "auto", height: "auto" }}  />
+                <Link href='/' >
+                    <Image src='/logo-full.png' alt='Logo' height={100} width={100} style={{ width: "auto", height: "auto" }} />
                 </Link>
+               
 
                 {problemPage && (
-					<div className='flex items-center gap-4 flex-1 justify-center'>
+					<div className='flex items-center sm:gap-4 flex-1 justify-center'>
 						<div
 							className='flex items-center justify-center rounded  hover:bg-dark-fill-2 h-8 w-8 cursor-pointer'
 							onClick={() => handleProblemChange(false)}
@@ -70,7 +72,7 @@ const Topbar:React.FC<TopbarProps> = ({problemPage}) => {
 							<div>
 								<BsList />
 							</div>
-							<p>Problem List</p>
+							<p className='hidden sm:block'>Problem List</p>
 						</Link>
 						<div
 							className='flex items-center justify-center rounded  hover:bg-dark-fill-2 h-8 w-8 cursor-pointer'
@@ -81,7 +83,7 @@ const Topbar:React.FC<TopbarProps> = ({problemPage}) => {
 					</div>
 				)}
 
-                <div className='flex items-center space-x-4 flex-1 justify-end'>
+                <div className='flex items-center space-x-4 justify-end'>
                 
                     {!user ? (
                         <>
@@ -90,14 +92,28 @@ const Topbar:React.FC<TopbarProps> = ({problemPage}) => {
                                     href='#'
                                     target='_blank'
                                     rel='noreferrer'
-                                    className='bg-dark-fill-3 py-1.5 px-3 cursor-pointer rounded text-brand-orange hover:bg-dark-fill-2'
+                                    className='bg-dark-fill-3 py-1.5 px-3 cursor-pointer rounded text-brand-orange hover:bg-dark-fill-2 transition hidden sm:block'
                                 >
                                     Premium
                                 </Link>
+                                <Link
+                                    href='#'
+                                    target='_blank'
+                                    rel='noreferrer'
+                                    className='bg-dark-fill-3 py-1.5 px-3 cursor-pointer rounded text-brand-orange hover:bg-dark-fill-2 transition block sm:hidden'
+                                >
+                                    <MdOutlineWorkspacePremium />
+                                </Link>
                             </div>
+                            <div>
                             <Link href='/auth' onClick={()=>{setAuthModalState((prev)=>({...prev, isOpen: true, type: "login"}))}}>
-                                <button className='bg-dark-fill-3 py-1 px-2 cursor-pointer rounded '>Sign In</button>
-                            </Link>                                
+                                <button className='bg-dark-fill-3 py-1 px-2 
+                                cursor-pointer rounded hover:bg-dark-fill-2 transition hidden sm:block'>Sign In</button>
+                                <button className='bg-dark-fill-3 py-1 px-2 
+                                cursor-pointer rounded hover:bg-dark-fill-2 transition block sm:hidden'><PiSignInFill/></button>
+                            </Link>  
+                            </div>
+                                                    
                         </>
                     ) : (
                         <>
