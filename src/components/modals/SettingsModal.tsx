@@ -17,6 +17,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ setSettings, settings }) 
 		e.stopPropagation(); //so it does not close the modal
 		setSettings({ ...settings, dropdownIsOpen: !settings.dropdownIsOpen });
 	};
+	
 	return (
 		<div className='text-white z-40'>
 			<div aria-modal='true' role='dialog' className='fixed inset-0 overflow-y-auto z-modal'>
